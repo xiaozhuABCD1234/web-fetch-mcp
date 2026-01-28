@@ -1,1 +1,1 @@
-# my-mcp-ts
+# web-fetch-mcp
