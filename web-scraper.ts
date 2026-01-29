@@ -11,8 +11,8 @@ import * as cheerio from "cheerio";
 export interface PageSummary {
   url: string;
   title: string;
-  links: string[];
-  images: string[];
+  links: { title: string; href: string }[];
+  images: { title: string; src: string }[];
   [key: string]: unknown;
 }
 
@@ -53,7 +53,7 @@ export interface PageTypeResult {
 }
 
 /**
- * 获取页面摘要信息
+ * 获取页面的摘要信息，包括标题、所有链接和图片
  * @param url - 要抓取的页面 URL
  * @param linkCount - 返回的链接数量上限，默认 10
  * @param imageCount - 返回的图片数量上限，默认 10
@@ -72,17 +72,19 @@ export async function fetchPageSummary(
   const title = $("title").text();
 
   // 提取所有链接
-  const links: string[] = [];
+  const links: { title: string; href: string }[] = [];
   $("a").each((_, el) => {
     const href = $(el).attr("href");
-    if (href) links.push(href);
+    const title = $(el).attr("title") || $(el).text().trim();
+    if (href) links.push({ title, href });
   });
 
   // 提取所有图片
-  const images: string[] = [];
+  const images: { title: string; src: string }[] = [];
   $("img").each((_, el) => {
     const src = $(el).attr("src");
-    if (src) images.push(src);
+    const title = $(el).attr("alt") || $(el).attr("title") || "";
+    if (src) images.push({ title, src });
   });
 
   return {
@@ -94,8 +96,10 @@ export async function fetchPageSummary(
 }
 
 /**
- * 获取页面元数据
- * 包括 SEO 信息、Open Graph、Twitter Card 等
+ * 获取页面的元数据信息
+ * 包括字符集、SEO 信息、Open Graph、Twitter Card 等
+ * @param url - 要抓取的页面 URL
+ * @returns 页面元数据对象
  */
 export async function fetchPageMetadata(url: string): Promise<PageMetadata> {
   const resp = await fetch(url);
@@ -147,9 +151,34 @@ export async function fetchPageMetadata(url: string): Promise<PageMetadata> {
 }
 
 /**
- * 启发式判断网页类型：静态或动态
- * @param html - 网页 HTML 内容
- * @returns 页面类型信息
+ * 提取页面中所有链接的标题和地址
+ * @param url - 要抓取的页面 URL
+ * @returns 链接数组，每个元素包含 title 和 href
+ */
+export async function fetchLinks(
+  url: string,
+): Promise<{ title: string; href: string }[]> {
+  const resp = await fetch(url);
+  const html = await resp.text();
+  const $ = cheerio.load(html);
+
+  const links: { title: string; href: string }[] = [];
+  $("a").each((_, el) => {
+    const href = $(el).attr("href");
+    const title = $(el).attr("title") || $(el).text().trim();
+    if (href) {
+      links.push({ title, href });
+    }
+  });
+
+  return links;
+}
+
+/**
+ * 通过启发式规则检测网页是静态还是动态（SPA）
+ * 通过检测挂载点、框架注水数据、HTML 标记等来判断页面类型
+ * @param html - 网页的 HTML 内容
+ * @returns 检测结果对象，包含 isDynamic、confidence、hints 和 framework
  */
 export function detectPageType(html: string): PageTypeResult {
   const $ = cheerio.load(html);

@@ -1,7 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { fetchPageMetadata, fetchPageSummary } from "./web-scraper.js";
+import {
+  fetchLinks,
+  fetchPageMetadata,
+  fetchPageSummary,
+} from "./web-scraper.js";
 
 const server = new McpServer({
   version: "0.0.1",
@@ -21,8 +25,8 @@ server.registerTool(
     outputSchema: {
       url: z.string(),
       title: z.string(),
-      links: z.array(z.string()),
-      images: z.array(z.string()),
+      links: z.array(z.object({ title: z.string(), href: z.string() })),
+      images: z.array(z.object({ title: z.string(), src: z.string() })),
     },
   },
   async (params: { url: string; linkCount?: number; imageCount?: number }) => {
@@ -72,6 +76,32 @@ server.registerTool(
     return {
       content: [{ type: "text", text: `标题: ${result.title}` }],
       structuredContent: result,
+    };
+  },
+);
+
+server.registerTool(
+  "fetch_links",
+  {
+    title: "获取页面链接",
+    description: "提取网页中所有链接的标题和地址",
+    inputSchema: {
+      url: z.string().describe("要抓取的网页 URL"),
+    },
+    outputSchema: {
+      links: z.array(
+        z.object({
+          title: z.string(),
+          href: z.string(),
+        }),
+      ),
+    },
+  },
+  async (params: { url: string }) => {
+    const result = await fetchLinks(params.url);
+    return {
+      content: [{ type: "text", text: `共找到 ${result.length} 个链接` }],
+      structuredContent: { links: result },
     };
   },
 );
