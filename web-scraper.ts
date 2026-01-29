@@ -1,6 +1,69 @@
+/**
+ * 网页抓取工具模块
+ * 提供页面内容提取、元数据获取、页面类型检测等功能
+ */
+
 import * as cheerio from "cheerio";
 
-export async function _fetch(url: string) {
+/**
+ * 页面基础信息（标题、链接、图片）
+ */
+export interface PageSummary {
+  url: string;
+  title: string;
+  links: string[];
+  images: string[];
+  [key: string]: unknown;
+}
+
+/**
+ * 页面元数据（SEO、Open Graph、Twitter 等）
+ */
+export interface PageMetadata {
+  charset: string;
+  title: string;
+  description?: string;
+  keywords?: string;
+  author?: string;
+  canonical?: string;
+  robots?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  og_url?: string;
+  og_type?: string;
+  og_site_name?: string;
+  twitter_card?: string;
+  twitter_image?: string;
+  next?: string;
+  prev?: string;
+  alternate?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * 页面类型检测结果
+ */
+export interface PageTypeResult {
+  isDynamic: boolean;
+  confidence: number;
+  hints: string[];
+  framework?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * 获取页面摘要信息
+ * @param url - 要抓取的页面 URL
+ * @param linkCount - 返回的链接数量上限，默认 10
+ * @param imageCount - 返回的图片数量上限，默认 10
+ * @returns 页面摘要对象，包含 url、title、links、images
+ */
+export async function fetchPageSummary(
+  url: string,
+  linkCount?: number,
+  imageCount?: number,
+): Promise<PageSummary> {
   const resp = await fetch(url);
   const html = await resp.text();
   const $ = cheerio.load(html);
@@ -25,12 +88,16 @@ export async function _fetch(url: string) {
   return {
     url,
     title,
-    links: links.slice(0, 10), // 最多返回 10 个链接
-    images: images.slice(0, 10), // 最多返回 10 个图片
+    links: linkCount ? links.slice(0, linkCount) : links.slice(0, 10),
+    images: imageCount ? images.slice(0, imageCount) : images.slice(0, 10),
   };
 }
 
-export async function _fetch_meta(url: string) {
+/**
+ * 获取页面元数据
+ * 包括 SEO 信息、Open Graph、Twitter Card 等
+ */
+export async function fetchPageMetadata(url: string): Promise<PageMetadata> {
   const resp = await fetch(url);
   const html = await resp.text();
   const $ = cheerio.load(html);
@@ -84,14 +151,7 @@ export async function _fetch_meta(url: string) {
  * @param html - 网页 HTML 内容
  * @returns 页面类型信息
  */
-interface PageTypeResult {
-  isDynamic: boolean;
-  confidence: number; // 0-1，越高越确定是动态
-  hints: string[];
-  framework?: string;
-}
-
-function detectPageType(html: string): PageTypeResult {
+export function detectPageType(html: string): PageTypeResult {
   const $ = cheerio.load(html);
   const hints: string[] = [];
   let score = 0;
