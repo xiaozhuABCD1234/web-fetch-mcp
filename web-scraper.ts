@@ -175,6 +175,23 @@ export async function fetchLinks(
 }
 
 /**
+ * 提取页面的纯文本内容
+ * @param url - 要抓取的页面 URL
+ * @returns 页面的纯文本内容
+ */
+export async function fetchPageText(url: string): Promise<string> {
+  const resp = await fetch(url);
+  const html = await resp.text();
+  const $ = cheerio.load(html);
+
+  return $("body")
+    .text()
+    .replace(/[\t ]+/g, " ") // tab和多个空格 → 单个空格
+    .replace(/(?:\n\s*){3,}/g, "\n\n") // 3个以上换行（含中间空格）→ 2个（段落分隔）
+    .trim();
+}
+
+/**
  * 通过启发式规则检测网页是静态还是动态（SPA）
  * 通过检测挂载点、框架注水数据、HTML 标记等来判断页面类型
  * @param html - 网页的 HTML 内容

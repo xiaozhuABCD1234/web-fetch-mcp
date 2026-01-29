@@ -5,6 +5,7 @@ import {
   fetchLinks,
   fetchPageMetadata,
   fetchPageSummary,
+  fetchPageText,
 } from "./web-scraper.js";
 
 const server = new McpServer({
@@ -15,12 +16,13 @@ const server = new McpServer({
 server.registerTool(
   "fetch_page_summary",
   {
-    title: "网页抓取",
-    description: "抓取网页内容，提取标题、链接和图片",
+    title: "网页摘要",
+    description:
+      "快速获取网页标题、主要链接和图片，便于了解页面整体结构和内容概览",
     inputSchema: {
-      url: z.string().describe("要抓取的网页 URL"),
-      linkCount: z.number().optional().describe("返回的链接数量上限，默认 10"),
-      imageCount: z.number().optional().describe("返回的图片数量上限，默认 10"),
+      url: z.string().describe("目标网页 URL"),
+      linkCount: z.number().optional().describe("返回链接数量上限，默认 10"),
+      imageCount: z.number().optional().describe("返回图片数量上限，默认 10"),
     },
     outputSchema: {
       url: z.string(),
@@ -45,10 +47,11 @@ server.registerTool(
 server.registerTool(
   "fetch_page_metadata",
   {
-    title: "网页元数据",
-    description: "提取网页的 SEO 和社交媒体元数据",
+    title: "SEO 元数据",
+    description:
+      "提取网页的 SEO 标签和 Open Graph 社交媒体元数据，用于分析页面优化和分享预览",
     inputSchema: {
-      url: z.string().describe("要抓取的网页 URL"),
+      url: z.string().describe("目标网页 URL"),
     },
     outputSchema: {
       charset: z.string(),
@@ -83,10 +86,11 @@ server.registerTool(
 server.registerTool(
   "fetch_links",
   {
-    title: "获取页面链接",
-    description: "提取网页中所有链接的标题和地址",
+    title: "提取链接",
+    description:
+      "提取页面中所有超链接的标题和地址，用于发现页面导航结构和外部资源",
     inputSchema: {
-      url: z.string().describe("要抓取的网页 URL"),
+      url: z.string().describe("目标网页 URL"),
     },
     outputSchema: {
       links: z.array(
@@ -102,6 +106,28 @@ server.registerTool(
     return {
       content: [{ type: "text", text: `共找到 ${result.length} 个链接` }],
       structuredContent: { links: result },
+    };
+  },
+);
+
+server.registerTool(
+  "fetch_page_text",
+  {
+    title: "提取正文",
+    description:
+      "提取网页的主要文本内容（去除 HTML 标签），用于阅读或分析页面文字信息",
+    inputSchema: {
+      url: z.string().describe("目标网页 URL"),
+    },
+    outputSchema: {
+      text: z.string(),
+    },
+  },
+  async (params: { url: string }) => {
+    const result = await fetchPageText(params.url);
+    return {
+      content: [{ type: "text", text: result.slice(0, 200) + "..." }],
+      structuredContent: { text: result },
     };
   },
 );
