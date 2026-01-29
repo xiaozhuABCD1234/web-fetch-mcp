@@ -184,11 +184,26 @@ export async function fetchPageText(url: string): Promise<string> {
   const html = await resp.text();
   const $ = cheerio.load(html);
 
-  return $("body")
-    .text()
-    .replace(/[\t ]+/g, " ") // tab和多个空格 → 单个空格
-    .replace(/(?:\n\s*){3,}/g, "\n\n") // 3个以上换行（含中间空格）→ 2个（段落分隔）
-    .trim();
+  const text = $("body").text();
+
+  return (
+    text
+      // 解码常见转义序列
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\")
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t")
+      // 删除无意义的 window.__VP_ 变量赋值
+      .replace(
+        /window\.__VP_[A-Z_]+__\s*=\s*JSON\.parse\(["'][^"']+["']\);?/g,
+        "",
+      )
+      // 清理多余空白
+      .replace(/\s*\n\s*/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/[ \t]+/g, " ")
+      .trim()
+  );
 }
 
 /**
