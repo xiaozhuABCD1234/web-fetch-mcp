@@ -7,6 +7,7 @@ import {
   fetchPageSummary,
   fetchPageText,
 } from "./web-scraper.js";
+import { searchWeb } from "./search.js";
 
 const server = new McpServer({
   version: "0.0.1",
@@ -196,6 +197,39 @@ server.registerTool(
         },
       ],
       structuredContent: result,
+    };
+  },
+);
+
+server.registerTool(
+  "search_web",
+  {
+    title: "网页搜索",
+    description: "使用 Bing 搜索引擎搜索关键词，返回搜索结果列表",
+    inputSchema: {
+      query: z.string().describe("搜索关键词"),
+    },
+    outputSchema: {
+      results: z.array(
+        z.object({
+          title: z.string(),
+          url: z.string(),
+          description: z.string(),
+          content: z.string(),
+        }),
+      ),
+    },
+  },
+  async (params: { query: string }) => {
+    const results = await searchWeb(params.query);
+    return {
+      content: [
+        {
+          type: "text",
+          text: `找到 ${results.length} 条结果`,
+        },
+      ],
+      structuredContent: { results },
     };
   },
 );
