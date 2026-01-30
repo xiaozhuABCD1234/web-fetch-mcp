@@ -4,6 +4,7 @@
  */
 
 import * as cheerio from "cheerio";
+import { getRenderedHtml } from "./browser.js";
 
 /**
  * 页面基础信息（标题、链接、图片）
@@ -153,14 +154,19 @@ export async function fetchPageMetadata(url: string): Promise<PageMetadata> {
 /**
  * 提取页面中所有链接的标题和地址
  * @param url - 要抓取的页面 URL
+ * @param forceHeadless - 强制使用无头浏览器爬取，默认根据页面类型自动判断
  * @returns 链接数组，每个元素包含 title 和 href
  */
 export async function fetchLinks(
   url: string,
-): Promise<{ title: string; href: string }[]> {
+  forceHeadless?: boolean,
+): Promise<{ links: { title: string; href: string }[] }> {
   const resp = await fetch(url);
   const html = await resp.text();
-  const $ = cheerio.load(html);
+  const pageType = detectPageType(html);
+  const useHeadless = forceHeadless ?? pageType.isDynamic;
+  const finalHtml = useHeadless ? await getRenderedHtml(url) : html;
+  const $ = cheerio.load(finalHtml);
 
   const links: { title: string; href: string }[] = [];
   $("a").each((_, el) => {
@@ -171,23 +177,30 @@ export async function fetchLinks(
     }
   });
 
-  return links;
+  return { links };
 }
 
 /**
  * 提取页面的纯文本内容
  * @param url - 要抓取的页面 URL
- * @returns 页面的纯文本内容
+ * @param forceHeadless - 强制使用无头浏览器爬取，默认根据页面类型自动判断
+ * @returns 页面纯文本内容对象
  */
-export async function fetchPageText(url: string): Promise<string> {
+export async function fetchPageText(
+  url: string,
+  forceHeadless?: boolean,
+): Promise<{ text: string }> {
   const resp = await fetch(url);
   const html = await resp.text();
-  const $ = cheerio.load(html);
+  const pageType = detectPageType(html);
+  const useHeadless = forceHeadless ?? pageType.isDynamic;
+  const finalHtml = useHeadless ? await getRenderedHtml(url) : html;
+  const $ = cheerio.load(finalHtml);
 
   const text = $("body").text();
 
-  return (
-    text
+  return {
+    text: text
       // 解码常见转义序列
       .replace(/\\"/g, '"')
       .replace(/\\\\/g, "\\")
@@ -202,8 +215,8 @@ export async function fetchPageText(url: string): Promise<string> {
       .replace(/\s*\n\s*/g, "\n")
       .replace(/\n{3,}/g, "\n\n")
       .replace(/[ \t]+/g, " ")
-      .trim()
-  );
+      .trim(),
+  };
 }
 
 /**
@@ -223,7 +236,7 @@ export function detectPageType(html: string): PageTypeResult {
     (id) => $(`#${id}`).length > 0 || $(`[id*="${id}"]`).length > 0,
   );
   if (hasMountPoint) {
-    score += 2;
+    score += 3;
     hints.push("存在 SPA 挂载点");
   }
 
@@ -293,13 +306,13 @@ export function detectPageType(html: string): PageTypeResult {
   // 7. 检测空 body 或极简 body
   const bodyChildren = $("body").children().length;
   if (bodyChildren === 0 || (bodyChildren <= 2 && bodyText.length < 50)) {
-    score += 1;
+    score += 3; // 空 body 是 SPA 的强特征
     hints.push("body 几乎为空");
   }
 
   // 计算置信度 (0-1)
   const confidence = Math.min(score / 10, 1);
-  const isDynamic = confidence > 0.3;
+  const isDynamic = confidence >= 0.3;
 
   // 提取框架名称
   const detectedFramework = frameworkMatch?.[1] ||
@@ -319,7 +332,7 @@ export function detectPageType(html: string): PageTypeResult {
 
 if (import.meta.path === Bun.main) {
   const resp = await fetch(
-    "https://www.bing.com/search?form=QBLH&q=%E7%9F%A5%E4%B9%8E",
+    "https://space.bilibili.com/151239202",
   );
   const html = await resp.text();
   console.log(detectPageType(html));

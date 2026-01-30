@@ -102,10 +102,47 @@ server.registerTool(
     },
   },
   async (params: { url: string }) => {
-    const result = await fetchLinks(params.url);
+    const result = await fetchLinks(params.url, false);
     return {
-      content: [{ type: "text", text: `共找到 ${result.length} 个链接` }],
-      structuredContent: { links: result },
+      content: [
+        {
+          type: "text",
+          text: `共找到 ${result.links.length} 个链接`,
+        },
+      ],
+      structuredContent: result,
+    };
+  },
+);
+
+server.registerTool(
+  "fetch_links_headless",
+  {
+    title: "提取链接（强制无头）",
+    description:
+      "使用无头浏览器提取页面中所有超链接的标题和地址，用于处理动态渲染的页面",
+    inputSchema: {
+      url: z.string().describe("目标网页 URL"),
+    },
+    outputSchema: {
+      links: z.array(
+        z.object({
+          title: z.string(),
+          href: z.string(),
+        }),
+      ),
+    },
+  },
+  async (params: { url: string }) => {
+    const result = await fetchLinks(params.url, true);
+    return {
+      content: [
+        {
+          type: "text",
+          text: `共找到 ${result.links.length} 个链接`,
+        },
+      ],
+      structuredContent: result,
     };
   },
 );
@@ -124,10 +161,41 @@ server.registerTool(
     },
   },
   async (params: { url: string }) => {
-    const result = await fetchPageText(params.url);
+    const result = await fetchPageText(params.url, false);
     return {
-      content: [{ type: "text", text: result.slice(0, 200) + "..." }],
-      structuredContent: { text: result },
+      content: [
+        {
+          type: "text",
+          text: result.text.slice(0, 200),
+        },
+      ],
+      structuredContent: result,
+    };
+  },
+);
+
+server.registerTool(
+  "fetch_page_text_headless",
+  {
+    title: "提取正文（强制无头）",
+    description: "使用无头浏览器提取网页的主要文本内容，用于处理动态渲染的页面",
+    inputSchema: {
+      url: z.string().describe("目标网页 URL"),
+    },
+    outputSchema: {
+      text: z.string(),
+    },
+  },
+  async (params: { url: string }) => {
+    const result = await fetchPageText(params.url, true);
+    return {
+      content: [
+        {
+          type: "text",
+          text: result.text.slice(0, 200),
+        },
+      ],
+      structuredContent: result,
     };
   },
 );
