@@ -234,7 +234,8 @@ server.registerTool(
   },
 );
 
-if (import.meta.path === Bun.main) {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-}
+// if (import.meta.path === Bun.main) {
+
+// }
+const transport = new StdioServerTransport();
+await server.connect(transport);

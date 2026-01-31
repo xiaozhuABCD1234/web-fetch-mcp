@@ -330,10 +330,10 @@ export function detectPageType(html: string): PageTypeResult {
   };
 }
 
-if (import.meta.path === Bun.main) {
-  const resp = await fetch(
-    "https://space.bilibili.com/151239202",
-  );
-  const html = await resp.text();
-  console.log(detectPageType(html));
-}
+// if (import.meta.path === Bun.main) {
+//   const resp = await fetch(
+//     "https://space.bilibili.com/151239202",
+//   );
+//   const html = await resp.text();
+//   console.log(detectPageType(html));
+// }
