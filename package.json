@@ -3,15 +3,17 @@
   "version": "0.0.1",
   "description": "MCP server for web fetching, text extraction, and browser automation (in development)",
   "license": "GPL-3.0-only",
+  "type": "module",
   "bin": {
     "web-fetch-mcp": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "package.json",
+    "README.md"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target node --minify --external '*'",
-    "prepare": "bun run build"
+    "build": "bun build ./src/index.ts --outdir ./dist --target node --minify --external '*'"
   },
   "devDependencies": {
     "@types/bun": "^1.3.7"
@@ -24,5 +26,18 @@
     "cheerio": "^1.2.0",
     "puppeteer": "^24.36.1",
     "zod": "^4.3.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaozhuABCD1234/web-fetch-mcp"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "web-fetch",
+    "browser-automation"
+  ],
+  "engines": {
+    "node": ">=18"
   }
 }
