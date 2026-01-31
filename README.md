@@ -25,22 +25,32 @@
 
 ## 安装
 
-```bash
-# 克隆仓库
-git clone https://github.com/yourusername/web-fetch-mcp.git
-cd web-fetch-mcp
+### 使用 npm/npx（推荐）
 
-# 安装依赖
+```bash
+# 全局安装
+npm install -g @xiaozhuabcd1234/web-fetch-mcp
+
+# 运行
+npx web-fetch-mcp
+```
+
+### 使用 Bun
+
+```bash
+bun install @xiaozhuabcd1234/web-fetch-mcp
+```
+
+### 从源码运行
+
+```bash
+git clone https://github.com/xiaozhuabcd1234/web-fetch-mcp.git
+cd web-fetch-mcp
 bun install
+bun run src/index.ts
 ```
 
 ## 使用方法
-
-### 作为 MCP 服务器运行
-
-```bash
-bun run index.ts
-```
 
 ### Claude Desktop 集成
 
@@ -50,46 +60,24 @@ bun run index.ts
 {
   "mcpServers": {
     "web-fetch": {
-      "command": "bun",
-      "args": ["run", "/path/to/web-fetch-mcp/index.ts"]
+      "command": "npx",
+      "args": ["-y", "@xiaozhuabcd1234/web-fetch-mcp"]
     }
   }
 }
-```
-
-### 程序化使用
-
-```typescript
-import {
-  fetchPageMetadata,
-  fetchPageSummary,
-  fetchPageText,
-} from "./web-scraper.js";
-import { searchWeb } from "./search.js";
-
-// 获取页面摘要
-const summary = await fetchPageSummary("https://example.com");
-console.log(summary.title);
-
-// 提取元数据
-const metadata = await fetchPageMetadata("https://example.com");
-console.log(metadata.description);
-
-// 网页搜索
-const results = await searchWeb("TypeScript 教程");
-console.log(results);
 ```
 
 ## 项目结构
 
 ```text
 web-fetch-mcp/
-├── index.ts           # MCP 服务器入口
-├── browser.ts         # Puppeteer 浏览器管理
-├── web-scraper.ts     # 核心抓取工具
-├── search.ts          # 网页搜索接口
-└── search-engines/
-    └── bing.ts        # Bing 搜索实现
+├── src/
+│   ├── index.ts           # MCP 服务器入口
+│   ├── browser.ts         # Puppeteer 浏览器管理
+│   ├── web-scraper.ts     # 核心抓取工具
+│   ├── search.ts          # 网页搜索接口
+│   └── search-engines/
+│       └── bing.ts        # Bing 搜索实现
 ```
 
 ### 核心模块
@@ -112,4 +100,4 @@ web-fetch-mcp/
 
 ## 开源协议
 
-MIT License - 详见 [LICENSE](LICENSE) 文件。
+GPL-3.0-only - 详见 [LICENSE](LICENSE) 文件。
